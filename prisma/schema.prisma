@@ -7,4 +7,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Step 1: Prisma is wired to Postgres. Domain models start in later steps.
+model Client {
+  id            String   @id @default(cuid())
+  firstName     String
+  lastName      String
+  phone         String   @unique
+  reminderNote  String   @default("")
+  internalNotes String   @default("")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([lastName, firstName])
+}

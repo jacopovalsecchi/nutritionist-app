@@ -25,7 +25,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
           <nav className="flex flex-wrap items-center gap-1">
             {NAV.map((item) => {
-              const active = pathname === item.href;
+              const active =
+                item.href === "/clienti"
+                  ? pathname === "/clienti" || pathname.startsWith("/clienti/")
+                  : pathname === item.href;
               return (
                 <Link
                   key={item.href}
