@@ -33,7 +33,7 @@ export default async function ClientiPage({
         <div>
           <h1 className="text-2xl font-semibold text-stone-900">Clienti</h1>
           <p className="mt-1 text-sm text-stone-600">
-            Anagrafica per i reminder WhatsApp. I file arriveranno nello step successivo.
+            Anagrafica e file per i reminder WhatsApp.
           </p>
         </div>
         <Link

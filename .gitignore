@@ -39,6 +39,9 @@ yarn-error.log*
 # local npm cache used to avoid global cache permission issues
 .npm-cache
 
+# uploaded client files (health documents)
+/uploads
+
 # vercel
 .vercel
 

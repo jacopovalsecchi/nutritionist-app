@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DeleteClientButton } from "./delete-client-button";
+import { DocumentHistory } from "./document-history";
+import { UploadDocumentForm } from "./upload-document-form";
 import { clientDisplayName } from "@/lib/client-form";
 import { prisma } from "@/lib/prisma";
 
@@ -21,7 +23,10 @@ export default async function ClientePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const client = await prisma.client.findUnique({ where: { id } });
+  const client = await prisma.client.findUnique({
+    where: { id },
+    include: { documents: { orderBy: { createdAt: "desc" } } },
+  });
   if (!client) {
     notFound();
   }
@@ -53,6 +58,17 @@ export default async function ClientePage({
         <Detail label="Nota reminder" value={client.reminderNote} />
         <Detail label="Note interne" value={client.internalNotes} />
       </dl>
+
+      <div className="grid max-w-2xl gap-6 rounded-2xl border border-stone-200 bg-white p-6">
+        <div>
+          <h2 className="text-lg font-semibold text-stone-900">File</h2>
+          <p className="mt-1 text-sm text-stone-600">
+            Piani, referti e altri documenti. Restano privati, solo tu puoi scaricarli.
+          </p>
+        </div>
+        <UploadDocumentForm clientId={client.id} />
+        <DocumentHistory clientId={client.id} documents={client.documents} />
+      </div>
     </section>
   );
 }

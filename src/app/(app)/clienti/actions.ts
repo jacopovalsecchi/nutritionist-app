@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { parseClientForm } from "@/lib/client-form";
 import { prisma } from "@/lib/prisma";
+import { deleteClientUploads } from "@/lib/uploads";
 
 export type ClientActionState = { error: string } | null;
 
@@ -63,6 +64,7 @@ export async function updateClient(
 }
 
 export async function deleteClient(clientId: string) {
+  await deleteClientUploads(clientId);
   await prisma.client.delete({ where: { id: clientId } });
   revalidatePath("/clienti");
   redirect("/clienti");

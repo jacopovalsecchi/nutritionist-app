@@ -8,14 +8,29 @@ datasource db {
 }
 
 model Client {
-  id            String   @id @default(cuid())
+  id            String     @id @default(cuid())
   firstName     String
   lastName      String
-  phone         String   @unique
-  reminderNote  String   @default("")
-  internalNotes String   @default("")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  phone         String     @unique
+  reminderNote  String     @default("")
+  internalNotes String     @default("")
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  documents     Document[]
 
   @@index([lastName, firstName])
+}
+
+model Document {
+  id           String   @id @default(cuid())
+  clientId     String
+  client       Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  originalName String
+  mimeType     String
+  sizeBytes    Int
+  storageKey   String
+  label        String   @default("")
+  createdAt    DateTime @default(now())
+
+  @@index([clientId, createdAt])
 }
