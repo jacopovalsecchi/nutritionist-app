@@ -8,15 +8,16 @@ datasource db {
 }
 
 model Client {
-  id            String     @id @default(cuid())
+  id            String         @id @default(cuid())
   firstName     String
   lastName      String
-  phone         String     @unique
-  reminderNote  String     @default("")
-  internalNotes String     @default("")
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  phone         String         @unique
+  reminderNote  String         @default("")
+  internalNotes String         @default("")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   documents     Document[]
+  appointments  Appointment[]
 
   @@index([lastName, firstName])
 }
@@ -55,9 +56,15 @@ model Appointment {
   location    String   @default("")
   notes       String   @default("")
   isAllDay    Boolean  @default(false)
+  clientId    String?
+  client      Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  matchStatus String   @default("unmatched")
+  matchSource String   @default("auto")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@unique([calendarUrl, icalUid, startAt])
   @@index([startAt])
+  @@index([matchStatus, startAt])
+  @@index([clientId, startAt])
 }

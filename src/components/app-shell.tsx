@@ -7,6 +7,7 @@ import { LogoutButton } from "@/components/logout-button";
 const NAV = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/clienti", label: "Clienti" },
+  { href: "/abbinamenti", label: "Da abbinare" },
   { href: "/impostazioni", label: "Impostazioni" },
 ];
 
@@ -28,7 +29,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               const active =
                 item.href === "/clienti"
                   ? pathname === "/clienti" || pathname.startsWith("/clienti/")
-                  : pathname === item.href;
+                  : item.href === "/abbinamenti"
+                    ? pathname === "/abbinamenti" || pathname.startsWith("/abbinamenti/")
+                    : pathname === item.href;
               return (
                 <Link
                   key={item.href}

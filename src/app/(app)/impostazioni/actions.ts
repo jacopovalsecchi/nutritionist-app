@@ -6,6 +6,7 @@ import {
   listIcloudCalendars,
 } from "@/lib/icloud";
 import { decryptSecret, encryptSecret } from "@/lib/secret-box";
+import { rematchEligibleAppointments } from "@/lib/rematch-appointments";
 import { getSettings } from "@/lib/settings";
 import { prisma } from "@/lib/prisma";
 
@@ -175,6 +176,8 @@ export async function syncIcloudCalendar(): Promise<SettingsActionState> {
       }
     });
 
+    await rematchEligibleAppointments();
+
     await prisma.setting.update({
       where: { id: "default" },
       data: {
@@ -190,11 +193,14 @@ export async function syncIcloudCalendar(): Promise<SettingsActionState> {
     });
     revalidatePath("/impostazioni");
     revalidatePath("/dashboard");
+    revalidatePath("/abbinamenti");
     return { error: message };
   }
 
   revalidatePath("/impostazioni");
   revalidatePath("/dashboard");
+  revalidatePath("/abbinamenti");
+  revalidatePath("/clienti");
   return { ok: true, message: "Calendario sincronizzato." };
 }
 
@@ -215,5 +221,6 @@ export async function disconnectIcloud(): Promise<SettingsActionState> {
   ]);
   revalidatePath("/impostazioni");
   revalidatePath("/dashboard");
+  revalidatePath("/abbinamenti");
   return { ok: true, message: "iCloud scollegato." };
 }

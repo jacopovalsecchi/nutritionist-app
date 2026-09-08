@@ -1,12 +1,15 @@
 import Link from "next/link";
-import { SyncCalendarButton } from "@/app/(app)/impostazioni/sync-buttons";
+import { clientDisplayName } from "@/lib/client-form";
 import { formatAppointmentWhen, formatSyncTime } from "@/lib/icloud";
+import { rematchEligibleAppointments } from "@/lib/rematch-appointments";
 import { getSettings } from "@/lib/settings";
 import { prisma } from "@/lib/prisma";
+import { SyncCalendarButton } from "@/app/(app)/impostazioni/sync-buttons";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
+  await rematchEligibleAppointments();
   const settings = await getSettings();
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
@@ -16,10 +19,16 @@ export default async function DashboardPage() {
         where: {
           calendarUrl: settings.calendarUrl,
           startAt: { gte: startOfToday },
+          matchStatus: { not: "ignored" },
         },
+        include: { client: true },
         orderBy: { startAt: "asc" },
       })
     : [];
+
+  const unmatchedCount = appointments.filter(
+    (appointment) => appointment.matchStatus === "unmatched",
+  ).length;
 
   return (
     <section className="space-y-6">
@@ -27,8 +36,7 @@ export default async function DashboardPage() {
         <div>
           <h1 className="text-2xl font-semibold text-stone-900">Dashboard</h1>
           <p className="mt-1 text-sm text-stone-600">
-            Eventi grezzi dal calendario iCloud. L’abbinamento ai clienti arriverà nello step
-            successivo.
+            Prossimi appuntamenti dal calendario iCloud.
           </p>
         </div>
         {settings.calendarUrl ? <SyncCalendarButton /> : null}
@@ -63,6 +71,18 @@ export default async function DashboardPage() {
           {settings.lastSyncError ? (
             <p className="text-sm text-red-800">{settings.lastSyncError}</p>
           ) : null}
+
+          {unmatchedCount > 0 ? (
+            <Link
+              href="/abbinamenti"
+              className="block rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 hover:bg-amber-100"
+            >
+              {unmatchedCount === 1
+                ? "1 appuntamento da abbinare a un cliente."
+                : `${unmatchedCount} appuntamenti da abbinare a un cliente.`}
+            </Link>
+          ) : null}
+
           {appointments.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-stone-300 bg-white px-6 py-10 text-stone-700">
               Nessun evento futuro. Sincronizza, oppure controlla che gli appuntamenti siano sul
@@ -83,6 +103,21 @@ export default async function DashboardPage() {
                   {appointment.location ? (
                     <p className="text-sm text-stone-500">{appointment.location}</p>
                   ) : null}
+                  {appointment.client ? (
+                    <Link
+                      href={`/clienti/${appointment.client.id}`}
+                      className="mt-1 inline-block text-sm font-medium text-emerald-900 hover:underline"
+                    >
+                      {clientDisplayName(appointment.client)}
+                    </Link>
+                  ) : (
+                    <Link
+                      href="/abbinamenti"
+                      className="mt-1 inline-block text-sm font-medium text-amber-800 hover:underline"
+                    >
+                      Da abbinare
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>

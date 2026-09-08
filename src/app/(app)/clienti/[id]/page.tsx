@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ClientAppointmentTimeline } from "./client-appointment-timeline";
 import { DeleteClientButton } from "./delete-client-button";
 import { DocumentHistory } from "./document-history";
 import { UploadDocumentForm } from "./upload-document-form";
@@ -25,13 +26,21 @@ export default async function ClientePage({
   const { id } = await params;
   const client = await prisma.client.findUnique({
     where: { id },
-    include: { documents: { orderBy: { createdAt: "desc" } } },
+    include: {
+      documents: { orderBy: { createdAt: "desc" } },
+      appointments: { orderBy: { startAt: "desc" } },
+    },
   });
   if (!client) {
     notFound();
   }
 
   const name = clientDisplayName(client);
+  const now = new Date();
+  const upcoming = client.appointments
+    .filter((appointment) => appointment.startAt >= now)
+    .sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
+  const past = client.appointments.filter((appointment) => appointment.startAt < now);
 
   return (
     <section className="space-y-8">
@@ -58,6 +67,16 @@ export default async function ClientePage({
         <Detail label="Nota reminder" value={client.reminderNote} />
         <Detail label="Note interne" value={client.internalNotes} />
       </dl>
+
+      <div className="grid max-w-2xl gap-6 rounded-2xl border border-stone-200 bg-white p-6">
+        <div>
+          <h2 className="text-lg font-semibold text-stone-900">Appuntamenti</h2>
+          <p className="mt-1 text-sm text-stone-600">
+            Storico e prossime visite abbinate da iCloud.
+          </p>
+        </div>
+        <ClientAppointmentTimeline upcoming={upcoming} past={past} />
+      </div>
 
       <div className="grid max-w-2xl gap-6 rounded-2xl border border-stone-200 bg-white p-6">
         <div>
