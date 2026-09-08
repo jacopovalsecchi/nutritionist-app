@@ -9,6 +9,7 @@ import { decryptSecret, encryptSecret } from "@/lib/secret-box";
 import { rematchEligibleAppointments } from "@/lib/rematch-appointments";
 import { getSettings } from "@/lib/settings";
 import { prisma } from "@/lib/prisma";
+import { verifyWhatsappCredentials } from "@/lib/whatsapp";
 
 export type SettingsActionState = { error: string } | { ok: true; message?: string } | null;
 
@@ -223,4 +224,77 @@ export async function disconnectIcloud(): Promise<SettingsActionState> {
   revalidatePath("/dashboard");
   revalidatePath("/abbinamenti");
   return { ok: true, message: "iCloud scollegato." };
+}
+
+export async function saveWhatsappCredentials(
+  _prev: SettingsActionState,
+  formData: FormData,
+): Promise<SettingsActionState> {
+  const phoneNumberId = readString(formData, "whatsappPhoneNumberId").replace(/\s+/g, "");
+  const token = readString(formData, "whatsappToken");
+  const templateName = readString(formData, "whatsappTemplateName").toLowerCase();
+  const templateLang = readString(formData, "whatsappTemplateLang") || "it";
+  const settings = await getSettings();
+
+  if (!/^\d{5,20}$/.test(phoneNumberId)) {
+    return { error: "Inserisci il Phone number ID numerico da Meta (WhatsApp → Configurazione API)." };
+  }
+  if (!templateName) {
+    return { error: "Inserisci il nome del template approvato, es. promemoria_appuntamento." };
+  }
+  if (!/^[a-z0-9_]+$/.test(templateName)) {
+    return { error: "Il nome template deve essere minuscolo, solo lettere, numeri e underscore." };
+  }
+  if (!/^[a-z]{2}(_[a-z]{2})?$/i.test(templateLang)) {
+    return { error: "Lingua del template non valida. Per l’italiano usa it." };
+  }
+
+  const resolvedToken = token || (settings.whatsappTokenEnc ? decryptSecret(settings.whatsappTokenEnc) : "");
+  if (!resolvedToken) {
+    return { error: "Inserisci il token di accesso permanente (system user) di Meta." };
+  }
+
+  let displayPhone = "";
+  try {
+    const verified = await verifyWhatsappCredentials(phoneNumberId, resolvedToken);
+    displayPhone = verified.displayPhone;
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Connessione a WhatsApp non riuscita." };
+  }
+
+  await prisma.setting.update({
+    where: { id: "default" },
+    data: {
+      whatsappPhoneNumberId: phoneNumberId,
+      whatsappTokenEnc: encryptSecret(resolvedToken),
+      whatsappTemplateName: templateName,
+      whatsappTemplateLang: templateLang,
+      whatsappDisplayPhone: displayPhone,
+    },
+  });
+
+  revalidatePath("/impostazioni");
+  revalidatePath("/clienti");
+  return {
+    ok: true,
+    message: displayPhone
+      ? `WhatsApp collegato (${displayPhone}).`
+      : "WhatsApp collegato.",
+  };
+}
+
+export async function disconnectWhatsapp(): Promise<SettingsActionState> {
+  await prisma.setting.update({
+    where: { id: "default" },
+    data: {
+      whatsappPhoneNumberId: "",
+      whatsappTokenEnc: "",
+      whatsappTemplateName: "promemoria_appuntamento",
+      whatsappTemplateLang: "it",
+      whatsappDisplayPhone: "",
+    },
+  });
+  revalidatePath("/impostazioni");
+  revalidatePath("/clienti");
+  return { ok: true, message: "WhatsApp scollegato." };
 }

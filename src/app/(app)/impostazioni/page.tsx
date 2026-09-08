@@ -1,5 +1,6 @@
 import { CalendarSelectForm, IcloudCredentialsForm } from "./icloud-forms";
 import { DisconnectIcloudButton, SyncCalendarButton } from "./sync-buttons";
+import { DisconnectWhatsappButton, WhatsappCredentialsForm } from "./whatsapp-forms";
 import { formatSyncTime, listIcloudCalendars } from "@/lib/icloud";
 import { decryptSecret } from "@/lib/secret-box";
 import { getSettings } from "@/lib/settings";
@@ -29,7 +30,7 @@ export default async function ImpostazioniPage() {
       <div>
         <h1 className="text-2xl font-semibold text-stone-900">Impostazioni</h1>
         <p className="mt-1 text-sm text-stone-600">
-          Collegamento al Calendario Apple. WhatsApp arriverà più avanti.
+          Collegamento al Calendario Apple e a WhatsApp Business (Cloud API).
         </p>
       </div>
 
@@ -75,6 +76,25 @@ export default async function ImpostazioniPage() {
           <SyncCalendarButton />
         </div>
       ) : null}
+
+      <div className="max-w-xl space-y-6 rounded-2xl border border-stone-200 bg-white p-6">
+        <div>
+          <h2 className="text-lg font-semibold text-stone-900">WhatsApp Cloud API</h2>
+          <p className="mt-1 text-sm text-stone-600">
+            Serve un account Meta Business, un numero WhatsApp Business e un template Utility
+            approvato. L’invio automatico arriverà nello step successivo: ora puoi solo fare una
+            prova dalla scheda cliente.
+          </p>
+        </div>
+        <WhatsappCredentialsForm
+          phoneNumberId={settings.whatsappPhoneNumberId}
+          templateName={settings.whatsappTemplateName}
+          templateLang={settings.whatsappTemplateLang}
+          hasToken={Boolean(settings.whatsappTokenEnc)}
+          displayPhone={settings.whatsappDisplayPhone}
+        />
+        {settings.whatsappTokenEnc ? <DisconnectWhatsappButton /> : null}
+      </div>
     </section>
   );
 }

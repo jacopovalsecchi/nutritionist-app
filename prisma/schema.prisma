@@ -37,13 +37,18 @@ model Document {
 }
 
 model Setting {
-  id                  String    @id @default("default")
-  icloudAppleId       String    @default("")
-  icloudPasswordEnc   String    @default("")
-  calendarUrl         String    @default("")
-  calendarDisplayName String    @default("")
-  lastSyncAt          DateTime?
-  lastSyncError       String    @default("")
+  id                     String    @id @default("default")
+  icloudAppleId          String    @default("")
+  icloudPasswordEnc      String    @default("")
+  calendarUrl            String    @default("")
+  calendarDisplayName    String    @default("")
+  lastSyncAt             DateTime?
+  lastSyncError          String    @default("")
+  whatsappPhoneNumberId  String    @default("")
+  whatsappTokenEnc       String    @default("")
+  whatsappTemplateName   String    @default("promemoria_appuntamento")
+  whatsappTemplateLang   String    @default("it")
+  whatsappDisplayPhone   String    @default("")
 }
 
 model Appointment {

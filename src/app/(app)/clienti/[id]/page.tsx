@@ -3,8 +3,11 @@ import { notFound } from "next/navigation";
 import { ClientAppointmentTimeline } from "./client-appointment-timeline";
 import { DeleteClientButton } from "./delete-client-button";
 import { DocumentHistory } from "./document-history";
+import { SendTestReminderButton } from "./send-test-reminder-button";
 import { UploadDocumentForm } from "./upload-document-form";
 import { clientDisplayName } from "@/lib/client-form";
+import { buildReminderPreview } from "@/lib/reminder-preview";
+import { getSettings } from "@/lib/settings";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -41,6 +44,9 @@ export default async function ClientePage({
     .filter((appointment) => appointment.startAt >= now)
     .sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
   const past = client.appointments.filter((appointment) => appointment.startAt < now);
+  const settings = await getSettings();
+  const whatsappReady = Boolean(settings.whatsappTokenEnc && settings.whatsappPhoneNumberId);
+  const reminderPreview = buildReminderPreview(client, upcoming[0] ?? null);
 
   return (
     <section className="space-y-8">
@@ -67,6 +73,55 @@ export default async function ClientePage({
         <Detail label="Nota reminder" value={client.reminderNote} />
         <Detail label="Note interne" value={client.internalNotes} />
       </dl>
+
+      <div className="grid max-w-xl gap-4 rounded-2xl border border-stone-200 bg-white p-6">
+        <div>
+          <h2 className="text-lg font-semibold text-stone-900">Reminder WhatsApp</h2>
+          <p className="mt-1 text-sm text-stone-600">
+            Invia ora il template di prova. I reminder automatici a 7 giorni arriveranno dopo.
+          </p>
+        </div>
+        {whatsappReady ? (
+          <>
+            <dl className="grid gap-3 text-sm">
+              <div>
+                <dt className="font-medium text-stone-500">Nome</dt>
+                <dd className="text-stone-900">{reminderPreview.firstName}</dd>
+              </div>
+              <div>
+                <dt className="font-medium text-stone-500">Data</dt>
+                <dd className="text-stone-900">{reminderPreview.date}</dd>
+              </div>
+              <div>
+                <dt className="font-medium text-stone-500">Ora</dt>
+                <dd className="text-stone-900">{reminderPreview.time}</dd>
+              </div>
+              <div>
+                <dt className="font-medium text-stone-500">Nota</dt>
+                <dd className="text-stone-900">{reminderPreview.note}</dd>
+              </div>
+            </dl>
+            {reminderPreview.usesSampleWhen ? (
+              <p className="text-sm text-amber-800">
+                Nessun appuntamento in arrivo: la prova usa data e ora di esempio.
+              </p>
+            ) : reminderPreview.appointmentTitle ? (
+              <p className="text-sm text-stone-600">
+                Prossimo appuntamento: {reminderPreview.appointmentTitle}.
+              </p>
+            ) : null}
+            <SendTestReminderButton clientId={client.id} clientName={name} phone={client.phone} />
+          </>
+        ) : (
+          <p className="text-sm text-stone-600">
+            Collega WhatsApp in{" "}
+            <Link href="/impostazioni" className="font-medium text-emerald-900 hover:underline">
+              Impostazioni
+            </Link>{" "}
+            per inviare un reminder di prova.
+          </p>
+        )}
+      </div>
 
       <div className="grid max-w-2xl gap-6 rounded-2xl border border-stone-200 bg-white p-6">
         <div>
