@@ -34,3 +34,30 @@ model Document {
 
   @@index([clientId, createdAt])
 }
+
+model Setting {
+  id                  String    @id @default("default")
+  icloudAppleId       String    @default("")
+  icloudPasswordEnc   String    @default("")
+  calendarUrl         String    @default("")
+  calendarDisplayName String    @default("")
+  lastSyncAt          DateTime?
+  lastSyncError       String    @default("")
+}
+
+model Appointment {
+  id          String   @id @default(cuid())
+  calendarUrl String
+  icalUid     String
+  title       String
+  startAt     DateTime
+  endAt       DateTime
+  location    String   @default("")
+  notes       String   @default("")
+  isAllDay    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([calendarUrl, icalUid, startAt])
+  @@index([startAt])
+}
