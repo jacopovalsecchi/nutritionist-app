@@ -12,6 +12,10 @@ model Client {
   firstName     String
   lastName      String
   phone         String         @unique
+  birthDate     DateTime?      @db.Date
+  address       String         @default("")
+  city          String         @default("")
+  postalCode    String         @default("")
   reminderNote  String         @default("")
   internalNotes String         @default("")
   createdAt     DateTime       @default(now())

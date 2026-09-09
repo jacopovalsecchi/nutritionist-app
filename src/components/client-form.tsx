@@ -5,6 +5,10 @@ type ClientFormValues = {
   firstName: string;
   lastName: string;
   phone: string;
+  birthDate: string;
+  address: string;
+  city: string;
+  postalCode: string;
   reminderNote: string;
   internalNotes: string;
 };
@@ -23,7 +27,7 @@ export function ClientForm({
   submitLabel: string;
 }) {
   return (
-    <form action={action} className="max-w-xl space-y-4">
+    <form action={action} className="max-w-2xl space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block space-y-1.5">
           <span className="text-sm font-medium text-stone-700">Nome</span>
@@ -46,21 +50,64 @@ export function ClientForm({
           />
         </label>
       </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="block space-y-1.5">
+          <span className="text-sm font-medium text-stone-700">Telefono WhatsApp</span>
+          <input
+            name="phone"
+            required
+            defaultValue={values?.phone ?? ""}
+            inputMode="tel"
+            autoComplete="tel"
+            placeholder="333 123 4567"
+            className={inputClassName}
+          />
+          <span className="text-xs text-stone-500">
+            Serve per i reminder. Accetta anche il formato italiano senza +39.
+          </span>
+        </label>
+        <label className="block space-y-1.5">
+          <span className="text-sm font-medium text-stone-700">Data di nascita</span>
+          <input
+            name="birthDate"
+            type="date"
+            defaultValue={values?.birthDate ?? ""}
+            className={inputClassName}
+          />
+        </label>
+      </div>
       <label className="block space-y-1.5">
-        <span className="text-sm font-medium text-stone-700">Telefono WhatsApp</span>
+        <span className="text-sm font-medium text-stone-700">Indirizzo</span>
         <input
-          name="phone"
-          required
-          defaultValue={values?.phone ?? ""}
-          inputMode="tel"
-          autoComplete="tel"
-          placeholder="333 123 4567"
+          name="address"
+          defaultValue={values?.address ?? ""}
+          autoComplete="street-address"
           className={inputClassName}
         />
-        <span className="text-xs text-stone-500">
-          Serve per i reminder. Accetta anche il formato italiano senza +39.
-        </span>
       </label>
+      <div className="grid gap-4 sm:grid-cols-3">
+        <label className="block space-y-1.5 sm:col-span-2">
+          <span className="text-sm font-medium text-stone-700">Città</span>
+          <input
+            name="city"
+            defaultValue={values?.city ?? ""}
+            autoComplete="address-level2"
+            className={inputClassName}
+          />
+        </label>
+        <label className="block space-y-1.5">
+          <span className="text-sm font-medium text-stone-700">CAP</span>
+          <input
+            name="postalCode"
+            defaultValue={values?.postalCode ?? ""}
+            inputMode="numeric"
+            autoComplete="postal-code"
+            maxLength={5}
+            placeholder="20100"
+            className={inputClassName}
+          />
+        </label>
+      </div>
       <label className="block space-y-1.5">
         <span className="text-sm font-medium text-stone-700">Nota reminder</span>
         <input

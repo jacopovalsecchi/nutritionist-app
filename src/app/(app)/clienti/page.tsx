@@ -1,18 +1,41 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
-import { clientDisplayName } from "@/lib/client-form";
+import {
+  clientDisplayName,
+  clientInitials,
+  formatBirthDate,
+} from "@/lib/client-form";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
 function matchesQuery(
-  client: { firstName: string; lastName: string; phone: string },
+  client: {
+    firstName: string;
+    lastName: string;
+    phone: string;
+    address: string;
+    city: string;
+    postalCode: string;
+  },
   query: string,
 ) {
   if (!query) {
     return true;
   }
-  const haystack = `${client.firstName} ${client.lastName} ${client.phone}`.toLowerCase();
+  const haystack =
+    `${client.firstName} ${client.lastName} ${client.phone} ${client.address} ${client.city} ${client.postalCode}`.toLowerCase();
   return haystack.includes(query.toLowerCase());
+}
+
+function Cell({ children, muted = false }: { children: ReactNode; muted?: boolean }) {
+  return (
+    <td
+      className={`whitespace-nowrap px-5 py-4 text-sm ${muted ? "text-stone-500" : "text-stone-700"}`}
+    >
+      {children}
+    </td>
+  );
 }
 
 export default async function ClientiPage({
@@ -50,7 +73,7 @@ export default async function ClientiPage({
           <input
             name="q"
             defaultValue={query}
-            placeholder="Nome o telefono"
+            placeholder="Nome, telefono o città"
             className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-stone-900 outline-none ring-emerald-800/20 focus:border-emerald-800 focus:ring-4"
           />
         </label>
@@ -79,26 +102,47 @@ export default async function ClientiPage({
           ) : null}
         </div>
       ) : (
-        <ul className="divide-y divide-stone-200 overflow-hidden rounded-2xl border border-stone-200 bg-white">
-          {visible.map((client) => (
-            <li key={client.id}>
-              <Link
-                href={`/clienti/${client.id}`}
-                className="flex flex-col gap-1 px-4 py-4 hover:bg-stone-50 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div>
-                  <p className="font-medium text-stone-900">{clientDisplayName(client)}</p>
-                  <p className="text-sm text-stone-600">{client.phone}</p>
-                </div>
-                {client.reminderNote ? (
-                  <p className="text-sm text-stone-500 sm:max-w-xs sm:text-right">
-                    {client.reminderNote}
-                  </p>
-                ) : null}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <div className="overflow-x-auto rounded-2xl border border-stone-200 bg-white">
+          <table className="min-w-full text-left">
+            <thead>
+              <tr className="border-b border-stone-100">
+                <th className="px-5 py-3 text-sm font-medium text-stone-500">Nome</th>
+                <th className="px-5 py-3 text-sm font-medium text-stone-500">Telefono</th>
+                <th className="px-5 py-3 text-sm font-medium text-stone-500">Data di nascita</th>
+                <th className="px-5 py-3 text-sm font-medium text-stone-500">Indirizzo</th>
+                <th className="px-5 py-3 text-sm font-medium text-stone-500">Città</th>
+                <th className="px-5 py-3 text-sm font-medium text-stone-500">CAP</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visible.map((client) => {
+                const name = clientDisplayName(client);
+                return (
+                  <tr
+                    key={client.id}
+                    className="border-b border-stone-100 last:border-b-0 hover:bg-stone-50"
+                  >
+                    <td className="px-5 py-4">
+                      <Link href={`/clienti/${client.id}`} className="flex items-center gap-3">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-stone-100 text-sm font-semibold text-stone-700">
+                          {clientInitials(client)}
+                        </span>
+                        <span className="font-semibold text-stone-900 hover:underline">{name}</span>
+                      </Link>
+                    </td>
+                    <Cell>{client.phone}</Cell>
+                    <Cell muted={!client.birthDate}>
+                      {formatBirthDate(client.birthDate) || "—"}
+                    </Cell>
+                    <Cell muted={!client.address}>{client.address || "—"}</Cell>
+                    <Cell muted={!client.city}>{client.city || "—"}</Cell>
+                    <Cell muted={!client.postalCode}>{client.postalCode || "—"}</Cell>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   );

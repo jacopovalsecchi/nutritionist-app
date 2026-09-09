@@ -9,6 +9,10 @@ type ClientValues = {
   firstName: string;
   lastName: string;
   phone: string;
+  birthDate: string;
+  address: string;
+  city: string;
+  postalCode: string;
   reminderNote: string;
   internalNotes: string;
 };

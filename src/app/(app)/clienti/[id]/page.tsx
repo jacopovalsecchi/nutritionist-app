@@ -4,7 +4,7 @@ import { ClientAppointmentTimeline } from "./client-appointment-timeline";
 import { DeleteClientButton } from "./delete-client-button";
 import { DocumentHistory } from "./document-history";
 import { UploadDocumentForm } from "./upload-document-form";
-import { clientDisplayName } from "@/lib/client-form";
+import { clientDisplayName, formatBirthDate } from "@/lib/client-form";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -64,6 +64,10 @@ export default async function ClientePage({
 
       <dl className="grid max-w-xl gap-6 rounded-2xl border border-stone-200 bg-white p-6">
         <Detail label="Telefono WhatsApp" value={client.phone} />
+        <Detail label="Data di nascita" value={formatBirthDate(client.birthDate)} />
+        <Detail label="Indirizzo" value={client.address} />
+        <Detail label="Città" value={client.city} />
+        <Detail label="CAP" value={client.postalCode} />
         <Detail label="Nota reminder" value={client.reminderNote} />
         <Detail label="Note interne" value={client.internalNotes} />
       </dl>
