@@ -75,7 +75,12 @@ export default async function ClientePage({
             Storico e prossime visite abbinate da iCloud.
           </p>
         </div>
-        <ClientAppointmentTimeline upcoming={upcoming} past={past} />
+        <ClientAppointmentTimeline
+          upcoming={upcoming}
+          past={past}
+          phone={client.phone}
+          reminderNote={client.reminderNote}
+        />
       </div>
 
       <div className="grid max-w-2xl gap-6 rounded-2xl border border-stone-200 bg-white p-6">

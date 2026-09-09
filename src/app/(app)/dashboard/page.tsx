@@ -4,6 +4,8 @@ import { formatAppointmentWhen, formatSyncTime } from "@/lib/icloud";
 import { rematchEligibleAppointments } from "@/lib/rematch-appointments";
 import { getSettings } from "@/lib/settings";
 import { prisma } from "@/lib/prisma";
+import { whatsappReminderHref } from "@/lib/whatsapp-link";
+import { WhatsappReminderButton } from "@/components/whatsapp-reminder-button";
 import { SyncCalendarButton } from "@/app/(app)/impostazioni/sync-buttons";
 
 export const dynamic = "force-dynamic";
@@ -90,36 +92,52 @@ export default async function DashboardPage() {
             </div>
           ) : (
             <ul className="divide-y divide-stone-200 overflow-hidden rounded-2xl border border-stone-200 bg-white">
-              {appointments.map((appointment) => (
-                <li key={appointment.id} className="px-4 py-4">
-                  <p className="font-medium text-stone-900">{appointment.title}</p>
-                  <p className="text-sm text-stone-600">
-                    {formatAppointmentWhen(
+              {appointments.map((appointment) => {
+                const whatsappHref = appointment.client
+                  ? whatsappReminderHref(
+                      appointment.client.phone,
                       appointment.startAt,
-                      appointment.endAt,
                       appointment.isAllDay,
-                    )}
-                  </p>
-                  {appointment.location ? (
-                    <p className="text-sm text-stone-500">{appointment.location}</p>
-                  ) : null}
-                  {appointment.client ? (
-                    <Link
-                      href={`/clienti/${appointment.client.id}`}
-                      className="mt-1 inline-block text-sm font-medium text-emerald-900 hover:underline"
-                    >
-                      {clientDisplayName(appointment.client)}
-                    </Link>
-                  ) : (
-                    <Link
-                      href="/abbinamenti"
-                      className="mt-1 inline-block text-sm font-medium text-amber-800 hover:underline"
-                    >
-                      Da abbinare
-                    </Link>
-                  )}
-                </li>
-              ))}
+                      appointment.client.reminderNote,
+                    )
+                  : null;
+                return (
+                  <li
+                    key={appointment.id}
+                    className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-start sm:justify-between"
+                  >
+                    <div>
+                      <p className="font-medium text-stone-900">{appointment.title}</p>
+                      <p className="text-sm text-stone-600">
+                        {formatAppointmentWhen(
+                          appointment.startAt,
+                          appointment.endAt,
+                          appointment.isAllDay,
+                        )}
+                      </p>
+                      {appointment.location ? (
+                        <p className="text-sm text-stone-500">{appointment.location}</p>
+                      ) : null}
+                      {appointment.client ? (
+                        <Link
+                          href={`/clienti/${appointment.client.id}`}
+                          className="mt-1 inline-block text-sm font-medium text-emerald-900 hover:underline"
+                        >
+                          {clientDisplayName(appointment.client)}
+                        </Link>
+                      ) : (
+                        <Link
+                          href="/abbinamenti"
+                          className="mt-1 inline-block text-sm font-medium text-amber-800 hover:underline"
+                        >
+                          Da abbinare
+                        </Link>
+                      )}
+                    </div>
+                    {whatsappHref ? <WhatsappReminderButton href={whatsappHref} /> : null}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </>
