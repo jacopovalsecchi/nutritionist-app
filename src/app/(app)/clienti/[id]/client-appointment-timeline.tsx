@@ -15,11 +15,13 @@ type AppointmentItem = {
 export function ClientAppointmentTimeline({
   upcoming,
   past,
+  name,
   phone,
   reminderNote,
 }: {
   upcoming: AppointmentItem[];
   past: AppointmentItem[];
+  name: string;
   phone: string;
   reminderNote: string;
 }) {
@@ -37,6 +39,7 @@ export function ClientAppointmentTimeline({
         title="Prossimi"
         appointments={upcoming}
         empty="Nessun appuntamento in arrivo."
+        name={name}
         phone={phone}
         reminderNote={reminderNote}
       />
@@ -44,6 +47,7 @@ export function ClientAppointmentTimeline({
         title="Storico"
         appointments={past}
         empty="Nessun appuntamento passato."
+        name={name}
         phone={phone}
         reminderNote={reminderNote}
       />
@@ -55,12 +59,14 @@ function AppointmentGroup({
   title,
   appointments,
   empty,
+  name,
   phone,
   reminderNote,
 }: {
   title: string;
   appointments: AppointmentItem[];
   empty: string;
+  name: string;
   phone: string;
   reminderNote: string;
 }) {
@@ -73,6 +79,7 @@ function AppointmentGroup({
         <ul className="divide-y divide-stone-200 overflow-hidden rounded-xl border border-stone-200">
           {appointments.map((appointment) => {
             const whatsappHref = whatsappReminderHref(
+              name,
               phone,
               appointment.startAt,
               appointment.isAllDay,

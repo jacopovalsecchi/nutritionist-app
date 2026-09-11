@@ -8,6 +8,7 @@ export function reminderWhatsappText(
   startAt: Date,
   isAllDay: boolean,
   reminderNote = "",
+  name = "",
 ) {
   const date = new Intl.DateTimeFormat("it-IT", {
     timeZone: TIME_ZONE,
@@ -17,8 +18,8 @@ export function reminderWhatsappText(
   }).format(startAt);
 
   let text = isAllDay
-    ? `Ti ricordo il tuo appuntamento in data ${date}`
-    : `Ti ricordo il tuo appuntamento in data ${date} alle ${new Intl.DateTimeFormat("it-IT", {
+    ? `Ciao ${name}, ti ricordo il tuo appuntamento in data ${date}`
+    : `Ciao ${name}, ti ricordo il tuo appuntamento in data ${date} alle ${new Intl.DateTimeFormat("it-IT", {
         timeZone: TIME_ZONE,
         hour: "2-digit",
         minute: "2-digit",
@@ -32,6 +33,7 @@ export function reminderWhatsappText(
 }
 
 export function whatsappReminderHref(
+  name: string,
   phone: string,
   startAt: Date,
   isAllDay: boolean,
@@ -42,6 +44,6 @@ export function whatsappReminderHref(
     return null;
   }
   return `https://wa.me/${number}?text=${encodeURIComponent(
-    reminderWhatsappText(startAt, isAllDay, reminderNote),
+    reminderWhatsappText(startAt, isAllDay, reminderNote, name),
   )}`;
 }

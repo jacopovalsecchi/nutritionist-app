@@ -22,6 +22,7 @@ model Client {
   updatedAt     DateTime       @updatedAt
   documents     Document[]
   appointments  Appointment[]
+  invoices      Invoice[]
 
   @@index([lastName, firstName])
 }
@@ -66,9 +67,26 @@ model Appointment {
   matchSource String   @default("auto")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  invoices    Invoice[]
 
   @@unique([calendarUrl, icalUid, startAt])
   @@index([startAt])
   @@index([matchStatus, startAt])
   @@index([clientId, startAt])
+}
+
+model Invoice {
+  id            String       @id @default(cuid())
+  number        String       @unique
+  issuedAt      DateTime     @db.Date
+  clientId      String
+  client        Client       @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  appointmentId String?
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  totalCents    Int
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([issuedAt])
+  @@index([clientId, issuedAt])
 }

@@ -1,26 +1,29 @@
 import Link from "next/link";
-import { clientDisplayName } from "@/lib/client-form";
-import { formatAppointmentWhen, formatSyncTime } from "@/lib/icloud";
+import { addCalendarDays, calendarDateKey, formatCalendarRange } from "@/lib/calendar-date";
+import { formatSyncTime } from "@/lib/icloud";
 import { rematchEligibleAppointments } from "@/lib/rematch-appointments";
 import { getSettings } from "@/lib/settings";
 import { prisma } from "@/lib/prisma";
-import { whatsappReminderHref } from "@/lib/whatsapp-link";
-import { WhatsappReminderButton } from "@/components/whatsapp-reminder-button";
 import { SyncCalendarButton } from "@/app/(app)/impostazioni/sync-buttons";
+import { DashboardAppointmentTable } from "./appointment-table";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   await rematchEligibleAppointments();
   const settings = await getSettings();
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
+  const todayKey = calendarDateKey(new Date());
+  const weekEndKey = addCalendarDays(todayKey, 7);
+  const rangeStart = new Date(`${todayKey}T00:00:00.000Z`);
+  rangeStart.setUTCHours(rangeStart.getUTCHours() - 14);
+  const rangeEnd = new Date(`${weekEndKey}T23:59:59.999Z`);
+  rangeEnd.setUTCHours(rangeEnd.getUTCHours() + 14);
 
   const appointments = settings.calendarUrl
     ? await prisma.appointment.findMany({
         where: {
           calendarUrl: settings.calendarUrl,
-          startAt: { gte: startOfToday },
+          startAt: { gte: rangeStart, lte: rangeEnd },
           matchStatus: { not: "ignored" },
         },
         include: { client: true },
@@ -28,17 +31,31 @@ export default async function DashboardPage() {
       })
     : [];
 
-  const unmatchedCount = appointments.filter(
-    (appointment) => appointment.matchStatus === "unmatched",
-  ).length;
+  const todayAppointments = appointments.filter(
+    (appointment) => calendarDateKey(appointment.startAt) === todayKey,
+  );
+  const weekAppointments = appointments.filter((appointment) => {
+    const key = calendarDateKey(appointment.startAt);
+    return key > todayKey && key <= weekEndKey;
+  });
+
+  const unmatchedCount = settings.calendarUrl
+    ? await prisma.appointment.count({
+        where: {
+          calendarUrl: settings.calendarUrl,
+          startAt: { gte: rangeStart },
+          matchStatus: "unmatched",
+        },
+      })
+    : 0;
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-stone-900">Dashboard</h1>
           <p className="mt-1 text-sm text-stone-600">
-            Prossimi appuntamenti dal calendario iCloud.
+            Appuntamenti di oggi e della prossima settimana, dal calendario iCloud.
           </p>
         </div>
         {settings.calendarUrl ? <SyncCalendarButton /> : null}
@@ -85,61 +102,31 @@ export default async function DashboardPage() {
             </Link>
           ) : null}
 
-          {appointments.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-stone-300 bg-white px-6 py-10 text-stone-700">
-              Nessun evento futuro. Sincronizza, oppure controlla che gli appuntamenti siano sul
-              calendario selezionato.
+          <section className="space-y-3">
+            <div>
+              <h2 className="text-lg font-semibold text-stone-900">Appuntamenti di oggi</h2>
+              <p className="mt-1 text-sm text-stone-500">{formatCalendarRange(todayKey, todayKey)}</p>
             </div>
-          ) : (
-            <ul className="divide-y divide-stone-200 overflow-hidden rounded-2xl border border-stone-200 bg-white">
-              {appointments.map((appointment) => {
-                const whatsappHref = appointment.client
-                  ? whatsappReminderHref(
-                      appointment.client.phone,
-                      appointment.startAt,
-                      appointment.isAllDay,
-                      appointment.client.reminderNote,
-                    )
-                  : null;
-                return (
-                  <li
-                    key={appointment.id}
-                    className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-start sm:justify-between"
-                  >
-                    <div>
-                      <p className="font-medium text-stone-900">{appointment.title}</p>
-                      <p className="text-sm text-stone-600">
-                        {formatAppointmentWhen(
-                          appointment.startAt,
-                          appointment.endAt,
-                          appointment.isAllDay,
-                        )}
-                      </p>
-                      {appointment.location ? (
-                        <p className="text-sm text-stone-500">{appointment.location}</p>
-                      ) : null}
-                      {appointment.client ? (
-                        <Link
-                          href={`/clienti/${appointment.client.id}`}
-                          className="mt-1 inline-block text-sm font-medium text-emerald-900 hover:underline"
-                        >
-                          {clientDisplayName(appointment.client)}
-                        </Link>
-                      ) : (
-                        <Link
-                          href="/abbinamenti"
-                          className="mt-1 inline-block text-sm font-medium text-amber-800 hover:underline"
-                        >
-                          Da abbinare
-                        </Link>
-                      )}
-                    </div>
-                    {whatsappHref ? <WhatsappReminderButton href={whatsappHref} /> : null}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+            <DashboardAppointmentTable
+              appointments={todayAppointments}
+              empty="Nessun appuntamento in agenda per oggi."
+            />
+          </section>
+
+          <section className="space-y-3">
+            <div>
+              <h2 className="text-lg font-semibold text-stone-900">
+                Appuntamenti della prossima settimana
+              </h2>
+              <p className="mt-1 text-sm text-stone-500">
+                {formatCalendarRange(addCalendarDays(todayKey, 1), weekEndKey)}
+              </p>
+            </div>
+            <DashboardAppointmentTable
+              appointments={weekAppointments}
+              empty="Nessun appuntamento nei prossimi sette giorni."
+            />
+          </section>
         </>
       )}
     </section>

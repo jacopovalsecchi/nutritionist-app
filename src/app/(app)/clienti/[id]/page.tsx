@@ -82,6 +82,7 @@ export default async function ClientePage({
         <ClientAppointmentTimeline
           upcoming={upcoming}
           past={past}
+          name={client.firstName}
           phone={client.phone}
           reminderNote={client.reminderNote}
         />

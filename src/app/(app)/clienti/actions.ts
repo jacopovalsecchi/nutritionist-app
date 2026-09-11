@@ -70,7 +70,12 @@ export async function updateClient(
   }
 }
 
-export async function deleteClient(clientId: string) {
+export async function deleteClient(clientId: string): Promise<ClientActionState> {
+  const invoiceCount = await prisma.invoice.count({ where: { clientId } });
+  if (invoiceCount > 0) {
+    return { error: "Non puoi eliminare questo cliente: ha delle fatture." };
+  }
+
   await prisma.appointment.updateMany({
     where: { clientId },
     data: {
@@ -84,5 +89,6 @@ export async function deleteClient(clientId: string) {
   revalidatePath("/clienti");
   revalidatePath("/dashboard");
   revalidatePath("/abbinamenti");
+  revalidatePath("/fatture");
   redirect("/clienti");
 }
